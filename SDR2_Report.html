@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDR2 – NAO Nutrition Assistant | UWE UFMFHP-15-M</title>
+<style>
+  /* ── RESET & BASE ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f5f4f1;
+    color: #1a1a1a;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 11.5pt;
+    line-height: 1.75;
+  }
+
+  /* ── PAGE SHELL (A4-ish) ── */
+  .page-wrap {
+    max-width: 820px;
+    margin: 40px auto 80px;
+    background: #ffffff;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.12);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  /* ── COVER BAND ── */
+  .cover {
+    background: linear-gradient(135deg, #1a2540 0%, #2d3f6e 60%, #1a2540 100%);
+    padding: 52px 56px 44px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .cover-module {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #8da7d6;
+    margin-bottom: 14px;
+  }
+  .cover h1 {
+    font-family: 'Georgia', serif;
+    font-size: 22pt;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #ffffff;
+    margin-bottom: 10px;
+    max-width: 540px;
+  }
+  .cover-sub {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10pt;
+    color: #a8bde0;
+    margin-bottom: 28px;
+    max-width: 500px;
+    font-style: italic;
+  }
+  .cover-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .cover-meta span {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 8.5pt;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.07);
+    color: #c8d8f0;
+  }
+
+  /* ── BODY CONTENT ── */
+  .body { padding: 48px 56px; }
+
+  /* ── SECTION HEADINGS ── */
+  .sec {
+    margin-top: 44px;
+    margin-bottom: 0;
+  }
+
+  .sec-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1a2540;
+    margin-bottom: 18px;
+  }
+  .sec-title h2 {
+    font-family: 'Georgia', serif;
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1a2540;
+    letter-spacing: 0.2px;
+  }
+  .sec-num-badge {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 8pt;
+    font-weight: 700;
+    background: #1a2540;
+    color: #fff;
+    padding: 3px 9px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-family: 'Georgia', serif;
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #1a2540;
+    margin: 22px 0 8px;
+  }
+
+  p {
+    margin-bottom: 11px;
+    color: #222;
+    text-align: justify;
+  }
+
+  /* ── INLINE CODE ── */
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 9.5pt;
+    background: #f0f3f8;
+    border: 1px solid #d0d8e8;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #1e3a6e;
+  }
+
+  em { font-style: italic; color: #333; }
+  strong { font-weight: 700; }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 20px;
+    font-size: 10pt;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  th {
+    background: #1a2540;
+    color: #fff;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 9pt;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 7px 12px;
+    border: 1px solid #dde3ef;
+    vertical-align: top;
+    color: #222;
+  }
+  tr:nth-child(even) td { background: #f7f9fc; }
+  tr:hover td { background: #eef2fb; }
+  th:not(:last-child), td:not(:last-child) { border-right: 1px solid #dde3ef; }
+
+  /* ── HYPOTHESES ── */
+  .hyp-block {
+    background: #f7f9fc;
+    border-left: 4px solid #2d3f6e;
+    border-radius: 0 6px 6px 0;
+    padding: 12px 16px;
+    margin: 10px 0 14px;
+  }
+  .hyp-block .hyp-label {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #2d3f6e;
+    margin-bottom: 4px;
+  }
+  .hyp-block p { margin: 0; text-align: left; }
+  .hyp-block .justif {
+    margin-top: 6px;
+    font-size: 10pt;
+    color: #555;
+    font-style: italic;
+  }
+
+  /* ══════════════════════════════════════════
+     SYSTEM DESIGN — SPECIAL HIGHLIGHT STYLES
+     ══════════════════════════════════════════ */
+
+  /* Architecture diagram */
+  .arch-diagram {
+    background: #1a2540;
+    border-radius: 8px;
+    padding: 24px 20px 20px;
+    margin: 16px 0 22px;
+    overflow-x: auto;
+  }
+  .arch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-width: 580px;
+  }
+  .arch-node { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 120px; }
+  .arch-box {
+    width: 106px;
+    padding: 11px 8px;
+    border-radius: 8px;
+    border: 1.5px solid;
+    text-align: center;
+  }
+  .arch-box .a-icon { font-size: 1.4rem; display: block; }
+  .arch-box .a-title { font-size: 7.5pt; font-weight: 700; font-family: 'Segoe UI', Arial, sans-serif; margin-top: 3px; }
+  .arch-box .a-file  { font-size: 6.5pt; font-family: monospace; margin-top: 2px; opacity: 0.8; }
+  .arch-box.n-pc  { border-color:#5b8def; background:rgba(91,141,239,0.12); color:#a8c4f8; }
+  .arch-box.n-nao { border-color:#3ecf8e; background:rgba(62,207,142,0.12); color:#7de8bc; }
+  .arch-box.n-srv { border-color:#a78bfa; background:rgba(167,139,250,0.12); color:#c4aafc; }
+  .arch-box.n-llm { border-color:#f59e0b; background:rgba(245,158,11,0.12); color:#fcc765; }
+  .arch-arrow {
+    flex: 1; min-width: 52px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .arr-proto { font-size: 6.5pt; color: #7090c0; font-family: 'Segoe UI', Arial, sans-serif; font-weight: 600; }
+  .arr-line {
+    width: 100%; height: 1.5px;
+    background: linear-gradient(90deg, #2d3f6e, #5b8def, #2d3f6e);
+    position: relative;
+  }
+  .arr-line::after { content:'▶'; position:absolute; right:-5px; top:50%; transform:translateY(-50%); font-size:6pt; color:#5b8def; }
+  .arr-port { font-size: 6pt; color: #506080; font-family: monospace; }
+
+  /* Innovation cards */
+  .innov-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0 22px;
+  }
+  .innov-card {
+    border: 1.5px solid #d0d8ee;
+    border-radius: 8px;
+    padding: 14px 14px 12px;
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+  }
+  .innov-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 8px 8px 0 0;
+  }
+  .innov-card.c-llm::before  { background: linear-gradient(90deg, #2d3f6e, #5b8def); }
+  .innov-card.c-mem::before  { background: linear-gradient(90deg, #16a34a, #3ecf8e); }
+  .innov-card.c-pers::before { background: linear-gradient(90deg, #c2410c, #f59e0b); }
+  .innov-icon { font-size: 1.5rem; margin-bottom: 7px; }
+  .innov-title {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #1a2540;
+    margin-bottom: 5px;
+  }
+  .innov-desc {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 8.5pt;
+    color: #444;
+    line-height: 1.55;
+    text-align: left;
+  }
+  .innov-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .innov-tag {
+    font-size: 7pt;
+    font-family: monospace;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #f0f3f8;
+    border: 1px solid #d0d8e8;
+    color: #2d4080;
+  }
+
+  /* Pipeline steps */
+  .pipeline { margin: 14px 0 22px; }
+  .pipe-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    position: relative;
+    padding-bottom: 16px;
+  }
+  .pipe-step:last-child { padding-bottom: 0; }
+  .pipe-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 14px; top: 30px; bottom: 0;
+    width: 1.5px;
+    background: #d0d8ee;
+  }
+  .pipe-num {
+    width: 29px; height: 29px;
+    border-radius: 50%;
+    border: 1.5px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 8.5pt; font-weight: 700;
+    flex-shrink: 0;
+    background: #fff;
+    z-index: 1;
+  }
+  .pipe-num.pc   { border-color: #5b8def; color: #5b8def; }
+  .pipe-num.nao  { border-color: #3ecf8e; color: #16a34a; }
+  .pipe-num.srv  { border-color: #a78bfa; color: #7c3aed; }
+  .pipe-num.llm  { border-color: #f59e0b; color: #b45309; }
+  .pipe-body strong {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9.5pt;
+    color: #1a2540;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .pipe-body span {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9pt;
+    color: #444;
+    line-height: 1.5;
+  }
+
+  /* Condition comparison */
+  .cond-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0 22px;
+  }
+  .cond-box {
+    border-radius: 8px;
+    border: 1.5px solid;
+    padding: 14px 16px;
+  }
+  .cond-box.cond-a { border-color: #f59e0b; background: #fffbf0; }
+  .cond-box.cond-b { border-color: #3ecf8e; background: #f0fdf8; }
+  .cond-label {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9pt;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .cond-a .cond-label { color: #b45309; }
+  .cond-b .cond-label { color: #15803d; }
+  .cond-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .cond-a .cond-dot { background: #f59e0b; }
+  .cond-b .cond-dot { background: #3ecf8e; }
+  .cond-list {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9pt;
+    color: #333;
+    line-height: 1.6;
+    list-style: none;
+    padding: 0;
+  }
+  .cond-list li::before { content: '→ '; color: #888; }
+
+  /* Callout box */
+  .callout {
+    border-left: 3px solid;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 12px 0 18px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9.5pt;
+    color: #333;
+  }
+  .callout.blue   { border-color: #5b8def; background: #f0f4fd; }
+  .callout.green  { border-color: #3ecf8e; background: #f0fdf8; }
+  .callout.orange { border-color: #f59e0b; background: #fffbf0; }
+  .callout strong { color: #1a2540; }
+
+  /* ── TASK TABLE ── */
+  .task-table td:first-child {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-weight: 700;
+    color: #2d3f6e;
+    white-space: nowrap;
+    width: 42px;
+  }
+  .task-highlight td { background: #f0f4fd !important; border-left: 3px solid #2d3f6e; }
+
+  /* ── RESULTS PLACEHOLDER ── */
+  .result-placeholder {
+    background: #f7f9fc;
+    border: 1.5px dashed #b0bcd8;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0 16px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9.5pt;
+    color: #5a6a8a;
+    font-style: italic;
+  }
+  .result-placeholder strong { color: #2d3f6e; font-style: normal; }
+
+  /* ── REFERENCES ── */
+  .ref-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+  }
+  .ref-list li {
+    font-size: 10pt;
+    padding: 4px 0 4px 20px;
+    position: relative;
+    border-bottom: 1px solid #eee;
+    color: #222;
+  }
+  .ref-list li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: #aaa;
+  }
+
+  /* ── APPENDIX CHECKLIST ── */
+  .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  .checklist li {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 10pt;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .check-box {
+    width: 14px; height: 14px;
+    border: 1.5px solid #bbb;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* ── HORIZONTAL RULE ── */
+  hr {
+    border: none;
+    border-top: 1.5px solid #e2e8f0;
+    margin: 36px 0;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #fff; }
+    .page-wrap { box-shadow: none; margin: 0; border-radius: 0; max-width: 100%; }
+    .body { padding: 28px 40px; }
+    .cover { padding: 36px 40px; }
+  }
+
+  @media (max-width: 700px) {
+    .body { padding: 28px 24px; }
+    .cover { padding: 32px 24px; }
+    .innov-grid { grid-template-columns: 1fr; }
+    .cond-grid  { grid-template-columns: 1fr; }
+    .arch-diagram { padding: 16px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- ════════════ COVER ════════════ -->
+  <div class="cover">
+    <div class="cover-module">UWE UFMFHP-15-M &nbsp;·&nbsp; Human-Robot Interaction Module &nbsp;·&nbsp; Study Design Report 2</div>
+    <h1>Does Visual Perception in a Social Robot Nutrition Assistant Improve User Experience?</h1>
+    <p class="cover-sub">NAO Robot HRI System — LLM-Powered, Memory-Augmented Nutrition Interaction</p>
+    <div class="cover-meta">
+      <span>📅 Deadline: 14 May 2026</span>
+      <span>📝 Max 1500 words</span>
+      <span>👥 Group Submission</span>
+      <span>🎓 University of Bristol</span>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- ════════════ 1. INTRODUCTION ════════════ -->
+    <div class="sec">
+      <div class="sec-title">
+        <span class="sec-num-badge">1</span>
+        <h2>Introduction</h2>
+      </div>
+
+      <p>Social robots are increasingly being explored as tools for health promotion, offering a uniquely embodied and conversational mode of interaction that screen-based applications cannot replicate (Fong et al., 2003). The NAO humanoid robot, with its expressive limb movements, synthesised speech, and on-board camera, presents a promising platform for delivering personalised health guidance. Nutrition is a domain well suited to conversational robot assistance: dietary habits are deeply personal, users benefit from contextualised advice, and the conversational format supports sustained engagement (Bickmore &amp; Picard, 2005).</p>
+
+      <p>A key capability distinguishing advanced social robots from simple chatbot interfaces is multimodal perception — in particular, the ability to visually observe a user's environment in real time. When a user holds up a meal and asks "Is this healthy?", a vision-enabled robot can ground its response in what it actually sees, rather than relying solely on verbal description. This visual grounding may fundamentally alter how users perceive the robot: as more attentive, more competent, and more socially present. Social presence — the sense of interacting with a real, aware entity — is a strong predictor of user satisfaction and engagement in HRI (Heerink et al., 2010).</p>
+
+      <p>Despite its relevance, the isolated effect of visual perception capability on user experience in health-oriented HRI has not been directly studied. This study addresses that gap by implementing two conditions on a NAO robot nutrition assistant — one with live visual analysis, one without — and comparing user ratings on perceived intelligence, helpfulness, and social presence.</p>
+    </div>
+
+    <hr>
+
+    <!-- ════════════ 2. RQs & HYPOTHESES ════════════ -->
+    <div class="sec">
+      <div class="sec-title">
+        <span class="sec-num-badge">2</span>
+        <h2>Research Questions and Hypotheses</h2>
+      </div>
+
+      <h3>Research Questions</h3>
+      <p><strong>RQ1:</strong> Does visual perception capability in a social robot nutrition assistant improve users' ratings of the robot's perceived intelligence and helpfulness compared to a text-only baseline?</p>
+      <p><strong>RQ2:</strong> Does visual perception capability increase users' sense of social presence during an interaction with a social robot nutrition assistant?</p>
+
+      <h3>Hypotheses</h3>
+
+      <div class="hyp-block">
+        <div class="hyp-label">H1 — Perceived Intelligence</div>
+        <p>Users interacting with the vision-enabled robot (Condition B) will rate the robot's perceived intelligence significantly higher than users in the text-only condition (Condition A), as measured by the Godspeed Perceived Intelligence subscale (Bartneck et al., 2009).</p>
+        <p class="justif">Justification: Robots that demonstrate environmental awareness are consistently rated as more intelligent in HRI studies (Mutlu et al., 2009). The ability to identify a food item from a camera image — without being told what it is — is a salient demonstration of perceptual competence.</p>
+      </div>
+
+      <div class="hyp-block">
+        <div class="hyp-label">H2 — Perceived Helpfulness</div>
+        <p>Users in Condition B will report significantly higher perceived helpfulness scores, as the robot can directly analyse food items rather than relying on user descriptions, enabling more targeted nutritional advice.</p>
+      </div>
+
+      <div class="hyp-block">
+        <div class="hyp-label">H3 — Social Presence</div>
+        <p>Users in Condition B will report higher social presence scores, as the robot's act of visually attending to the user's environment — an analogue of human gaze — is a key social signal associated with attentiveness and engagement (Kendon, 1967).</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- ════════════ 3. SYSTEM DESIGN ════════════ -->
+    <div class="sec">
+      <div class="sec-title">
+        <span class="sec-num-badge">3</span>
+        <h2>System Design</h2>
+      </div>
+
+      <!-- ─── 3.1 Dialogue Pipeline ─── -->
+      <h3>3.1 Dialogue Pipeline</h3>
+
+      <p>The system operates across <strong>three networked layers</strong>, enabling real-time spoken conversation between a user and a NAO humanoid robot, with every response generated dynamically by a cloud-hosted large language model (Qwen, Alibaba DashScope). Unlike scripted or rule-based HRI systems, no responses are pre-written — the robot produces contextually appropriate replies conditioned on the user's full session history, dietary log, and (in Condition B) a live camera image.</p>
+
+      <!-- Architecture diagram -->
+      <div class="arch-diagram">
+        <div class="arch-row">
+          <div class="arch-node">
+            <div class="arch-box n-pc">
+              <span class="a-icon">🖥️</span>
+              <div class="a-title">PC Voice Proxy</div>
+              <div class="a-file">pc_voice_proxy.py</div>
+            </div>
+          </div>
+          <div class="arch-arrow">
+            <div class="arr-proto">TCP</div>
+            <div class="arr-line"></div>
+            <div class="arr-port">:9998</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-box n-nao">
+              <span class="a-icon">🤖</span>
+              <div class="a-title">NAO Robot</div>
+              <div class="a-file">robot_client.py</div>
+            </div>
+          </div>
+          <div class="arch-arrow">
+            <div class="arr-proto">TCP</div>
+            <div class="arr-line"></div>
+            <div class="arr-port">:9999</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-box n-srv">
+              <span class="a-icon">💻</span>
+              <div class="a-title">AI Server</div>
+              <div class="a-file">server_brain.py</div>
+            </div>
+          </div>
+          <div class="arch-arrow">
+            <div class="arr-proto">HTTPS</div>
+            <div class="arr-line"></div>
+            <div class="arr-port">:443</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-box n-llm">
+              <span class="a-icon">☁️</span>
+              <div class="a-title">Qwen LLM API</div>
+              <div class="a-file">DashScope Cloud</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step-by-step pipeline -->
+      <div class="pipeline">
+        <div class="pipe-step">
+          <div class="pipe-num pc">1</div>
+          <div class="pipe-body">
+            <strong>Speech Capture &amp; Recognition (PC)</strong>
+            <span>The user holds the Space key to speak. <code>pc_voice_proxy.py</code> records audio via PyAudio and calls Google Speech-to-Text for transcription. Vision keywords (<em>look, see, this, check</em>) are detected to set a <code>needs_vision</code> flag.</span>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num pc">2</div>
+          <div class="pipe-body">
+            <strong>Command Relay: PC → NAO (TCP :9998)</strong>
+            <span>The transcript and vision flag are sent as a JSON message to <code>robot_client.py</code>. A <code>\n</code> delimiter resolves TCP stream-boundary issues without requiring HTTP — necessary because NAO runs Python 2.7.</span>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num nao">3</div>
+          <div class="pipe-body">
+            <strong>Condition-Dependent Image Capture (NAO)</strong>
+            <span><strong>Condition B:</strong> NAO says <em>"Let me take a look"</em>, captures a VGA image via <code>ALVideoDevice</code>, compresses to JPEG (~20–50 KB), and Base64-encodes it. <strong>Condition A:</strong> NAO says <em>"I cannot see things around me"</em> — no image taken.</span>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num nao">4</div>
+          <div class="pipe-body">
+            <strong>Request Relay: NAO → Server (TCP :9999)</strong>
+            <span><code>robot_client.py</code> opens a short TCP connection to <code>server_brain.py</code>, transmitting text (and Base64 image if captured) as a single JSON payload, with a 30-second timeout awaiting the LLM response.</span>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num srv">5</div>
+          <div class="pipe-body">
+            <strong>LLM Query Construction (Server)</strong>
+            <span>The server assembles a ChatML message array: personality system prompt + embedded nutrition knowledge base + live dietary log + top-5 semantically relevant history turns + current user message (with optional image).</span>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num llm">6</div>
+          <div class="pipe-body">
+            <strong>Qwen API Call &amp; Response (HTTPS)</strong>
+            <span>The server POSTs to <code>qwen-plus</code> (text) or <code>qwen-vl-plus</code> (with image). The LLM returns a reply under 60 words, ending with a self-chosen gesture tag, e.g. <code>[ACTION:nod]</code>.</span>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num nao">7</div>
+          <div class="pipe-body">
+            <strong>Parallel TTS + Gesture Execution (NAO)</strong>
+            <span>The action tag is extracted, saved to history, and returned to NAO. Two threads launch simultaneously: <code>ALTextToSpeech</code> (speech) and <code>ALAnimationPlayer</code> (gesture), producing synchronised embodied communication.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── KEY INNOVATIONS ─── -->
+      <div class="callout blue">
+        <strong>Key innovations over a standard scripted robot:</strong> (1) every response is generated live by a large language model; (2) the robot remembers and builds on prior conversation turns; (3) advice is personalised to the user's actual dietary intake logged during the session.
+      </div>
+
+      <div class="innov-grid">
+        <div class="innov-card c-llm">
+          <div class="innov-icon">🧠</div>
+          <div class="innov-title">LLM-Powered Dialogue</div>
+          <div class="innov-desc">All responses are generated dynamically by <strong>Qwen</strong> (comparable to GPT-4), conditioned on conversation context. The LLM also self-selects the most contextually appropriate body gesture from 22 options per turn.</div>
+          <div class="innov-tags">
+            <span class="innov-tag">qwen-plus</span>
+            <span class="innov-tag">qwen-vl-plus</span>
+            <span class="innov-tag">ChatML</span>
+            <span class="innov-tag">&lt;60 words/reply</span>
+          </div>
+        </div>
+        <div class="innov-card c-mem">
+          <div class="innov-icon">💾</div>
+          <div class="innov-title">Persistent Memory System</div>
+          <div class="innov-desc">The server maintains a <strong>rolling 30-turn conversation history</strong> per participant. An intelligent retrieval algorithm scores each prior turn by keyword relevance to the current question, injecting the 5 most relevant turns into every LLM call.</div>
+          <div class="innov-tags">
+            <span class="innov-tag">30-turn window</span>
+            <span class="innov-tag">relevance scoring</span>
+            <span class="innov-tag">top-5 retrieval</span>
+          </div>
+        </div>
+        <div class="innov-card c-pers">
+          <div class="innov-icon">🥗</div>
+          <div class="innov-title">Personalised Nutrition Q&amp;A</div>
+          <div class="innov-desc">The server auto-detects eating verbs (<em>had, ate, drank</em>) and meal-time references, building a <strong>live dietary log</strong> injected into every prompt — so NAO's dinner recommendation genuinely accounts for what the user ate at breakfast and lunch.</div>
+          <div class="innov-tags">
+            <span class="innov-tag">food logging</span>
+            <span class="innov-tag">meal-time detection</span>
+            <span class="innov-tag">diet context</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── 3.2 Non-Verbal ─── -->
+      <h3>3.2 Non-Verbal Communication Behaviours</h3>
+
+      <p>Rather than a fixed keyword-to-gesture rule map, the LLM itself selects the most contextually fitting gesture tag per response. The server extracts the tag via regular expression and dispatches the corresponding NAO animation in a dedicated thread running <em>in parallel</em> with speech synthesis, so gesture and speech are fully synchronised.</p>
+
+      <p>The robot draws from 22 gesture behaviours including: <code>greeting</code>, <code>wave</code>, <code>nod</code>, <code>think</code>, <code>explain</code>, <code>point</code>, <code>thumbsUp</code>, <code>celebrate</code>, <code>sorry</code>, <code>sad</code>, <code>confused</code>, <code>bow</code>, <code>stretch</code>, <code>dance</code>, <code>clap</code>, and <code>neutral</code>. This AI-driven selection produces more natural and contextually coherent embodied communication than rule-based approaches.</p>
+
+      <!-- ─── 3.3 Visual Perception ─── -->
+      <h3>3.3 Human Perception and Autonomous Visual Response</h3>
+
+      <p>The experimental manipulation centres on the robot's capacity to perceive its physical environment. The system continuously monitors user speech for vision-trigger keywords. The two conditions produce markedly different robot behaviours in response to the same spoken prompt:</p>
+
+      <div class="cond-grid">
+        <div class="cond-box cond-a">
+          <div class="cond-label"><span class="cond-dot"></span>Condition A — Control (no_vision)</div>
+          <ul class="cond-list">
+            <li>Vision keyword detected but ignored</li>
+            <li>NAO says: <em>"I cannot see things around me. Please tell me what you have."</em></li>
+            <li>No camera image captured</li>
+            <li>Server enforces <code>image_data = null</code></li>
+            <li>Routes to <code>qwen-plus</code> text model</li>
+            <li>No visual persona injected in prompt</li>
+          </ul>
+        </div>
+        <div class="cond-box cond-b">
+          <div class="cond-label"><span class="cond-dot"></span>Condition B — Experimental (vision)</div>
+          <ul class="cond-list">
+            <li>Vision keyword triggers autonomous capture</li>
+            <li>NAO says: <em>"Let me take a look."</em></li>
+            <li>VGA 640×480 JPEG captured via ALVideoDevice</li>
+            <li>Base64-encoded image (~20–50 KB) sent to server</li>
+            <li>Routes to <code>qwen-vl-plus</code> vision-language model</li>
+            <li><code>VISION_PERSONA</code> prompt appended: instructs LLM to naturally comment on visible food</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout orange">
+        <strong>Double-layer condition control:</strong> The <code>EXPERIMENT_CONDITION</code> flag is set in both <code>robot_client.py</code> (hardware layer) and <code>server_brain.py</code> (AI layer) independently — preventing any cross-contamination between conditions even if the hardware behaves unexpectedly.
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- ════════════ 4. METHODOLOGY ════════════ -->
+    <div class="sec">
+      <div class="sec-title">
+        <span class="sec-num-badge">4</span>
+        <h2>Study Methodology</h2>
+      </div>
+
+      <h3>4.1 User Study Design</h3>
+      <p>A <strong>between-subjects</strong> experimental design was employed with two conditions. The independent variable is visual perception capability (absent vs. present). Sessions were conducted in a quiet room with a table, chair, and three standardised food props (an apple, a packaged sandwich, a chocolate bar) available for Task 3. Participants were randomly assigned to one condition.</p>
+
+      <table>
+        <tr>
+          <th>Condition</th>
+          <th>Label</th>
+          <th>Robot Capability</th>
+        </tr>
+        <tr>
+          <td><strong>A</strong></td>
+          <td><code>no_vision</code> — Control</td>
+          <td>Text dialogue only; camera disabled</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td>
+          <td><code>vision</code> — Experimental</td>
+          <td>Text dialogue + live visual food analysis via Qwen-VL</td>
+        </tr>
+      </table>
+
+      <h3>4.2 User Study Procedure</h3>
+      <p>Each session lasted 15–20 minutes and followed a standardised protocol:</p>
+
+      <p><strong>1. Briefing (2 min)</strong> — The researcher explained the study and obtained written informed consent.</p>
+      <p><strong>2. Six standardised interaction tasks (10 min)</strong> — Participants received a printed task card and spoke each prompt to NAO in sequence:</p>
+
+      <table class="task-table">
+        <tr>
+          <th>Task</th>
+          <th>Participant Prompt</th>
+          <th>Purpose</th>
+        </tr>
+        <tr>
+          <td>T1</td>
+          <td><em>"Hi Nao, nice to meet you. What can you help me with today?"</em></td>
+          <td>Greeting; baseline social behaviour</td>
+        </tr>
+        <tr>
+          <td>T2</td>
+          <td><em>"I had two eggs and a piece of toast for breakfast this morning."</em></td>
+          <td>Food logging; triggers memory system</td>
+        </tr>
+        <tr class="task-highlight">
+          <td>T3 ★</td>
+          <td>[Hold up food prop] <em>"Nao, look — is this a healthy choice for my lunch?"</em></td>
+          <td><strong>Critical manipulation task</strong> — vision vs. no-vision response</td>
+        </tr>
+        <tr>
+          <td>T4</td>
+          <td><em>"Based on what I've eaten today, what would you recommend for dinner?"</em></td>
+          <td>Personalised memory-based advice</td>
+        </tr>
+        <tr>
+          <td>T5</td>
+          <td><em>"I'm trying to eat healthier. What are the most important nutrients I should focus on?"</em></td>
+          <td>Knowledge depth; sustained dialogue</td>
+        </tr>
+        <tr>
+          <td>T6</td>
+          <td><em>"Thank you Nao, that was really helpful. Goodbye!"</em></td>
+          <td>Farewell behaviour</td>
+        </tr>
+      </table>
+
+      <p>Task T3 is the key between-condition manipulation: Condition B participants receive a visually grounded response naming the specific food item held up; Condition A participants receive verbal-only advice without visual identification.</p>
+
+      <p><strong>3. Questionnaire (3 min)</strong> — Godspeed questionnaire and Perceived Helpfulness Scale completed immediately after the interaction.</p>
+      <p><strong>4. Post-study interview (3–5 min)</strong> — Semi-structured interview exploring subjective impressions.</p>
+      <p><strong>5. Debriefing</strong> — The researcher explained both conditions and the camera system.</p>
+
+      <h3>4.3 Dependent Measures</h3>
+      <p><strong>Godspeed Questionnaire</strong> (Bartneck et al., 2009): A validated 5-factor HRI instrument measuring Anthropomorphism, Animacy, Likeability, Perceived Intelligence, and Perceived Safety on 5-point semantic differential scales. The Perceived Intelligence subscale (5 items: ignorant–knowledgeable, irresponsible–responsible, unintelligent–intelligent, foolish–sensible, incompetent–competent) is the primary measure for H1. The Animacy and Likeability subscales (8 items combined) serve as a proxy for social presence (H3).</p>
+
+      <p><strong>Perceived Helpfulness Scale</strong> (custom, 5 items, 7-point Likert): <em>"The robot's advice was relevant to my situation"; "The robot's responses felt personalised to me"; "I would trust this robot's nutritional advice"; "The robot understood what I was asking"; "I found this interaction useful for my nutrition goals."</em> Internal consistency (Cronbach's α) will be reported. Primary outcome for H2.</p>
+
+      <p><strong>Post-study interview:</strong> Three open questions: (1) <em>"How did you feel about the robot's responses overall?"</em>; (2) <em>"Was there a moment that felt particularly natural or unnatural?"</em>; (3) <em>"Would you use a robot like this for nutrition advice in daily life? Why or why not?"</em> Responses were audio-recorded and analysed using reflexive thematic analysis (Braun &amp; Clarke, 2006).</p>
+
+      <h3>4.4 Participants</h3>
+      <p>A target of N = 16 participants (8 per condition) were recruited via convenience sampling from University of Bristol students and staff. Inclusion criteria: aged 18–40, fluent English speakers, no prior direct experience with NAO robots. Participants received no financial compensation. Ethical approval was obtained prior to data collection.</p>
+
+      <div class="result-placeholder"><strong>[Fill in after data collection]</strong> Final N = ___, age M = ___ (SD = ___), gender: ___ female / ___ male / ___ other, prior robot experience: ___%. </div>
+    </div>
+
+    <hr>
+
+    <!-- ════════════ 5. RESULTS ════════════ -->
+    <div class="sec">
+      <div class="sec-title">
+        <span class="sec-num-badge">5</span>
+        <h2>Results</h2>
+      </div>
+
+      <h3>5.1 Participant Overview</h3>
+      <div class="result-placeholder">N = ___ participants completed the study (Condition A: n = ___, Condition B: n = ___). Mean age: M = ___ (SD = ___). Gender distribution: ___ female, ___ male, ___ non-binary. ___% reported no prior experience with social robots.</div>
+
+      <h3>5.2 Perceived Intelligence — H1 (Godspeed Subscale)</h3>
+      <div class="result-placeholder">Condition B: M = ___ (SD = ___). Condition A: M = ___ (SD = ___).<br>
+      Normality assessed via Shapiro-Wilk test. [If normal: Independent-samples t-test: t(__) = ___, p = ___. / If non-normal: Mann-Whitney U = ___, p = ___.]<br>
+      Effect size: Cohen's d / r = ___.</div>
+
+      <h3>5.3 Perceived Helpfulness — H2</h3>
+      <div class="result-placeholder">Condition B: M = ___ (SD = ___). Condition A: M = ___ (SD = ___).<br>
+      Scale reliability: Cronbach's α = ___. [Statistical test result.]</div>
+
+      <h3>5.4 Social Presence — H3 (Animacy + Likeability)</h3>
+      <div class="result-placeholder">Condition B: M = ___ (SD = ___). Condition A: M = ___ (SD = ___).<br>
+      [Statistical test result and effect size.]</div>
+
+      <h3>5.5 Qualitative Results</h3>
+      <div class="result-placeholder">
+        Thematic analysis identified the following themes:<br>
+        — <strong>Theme 1:</strong> [e.g., Natural conversational flow — participants commented on response naturalness]<br>
+        — <strong>Theme 2:</strong> [e.g., Surprise at visual awareness (Condition B)]<br>
+        — <strong>Theme 3:</strong> [e.g., Trust in personalised recall of meal history]<br><br>
+        Representative quotes:<br>
+        Condition B: <em>"[Insert quote]"</em><br>
+        Condition A: <em>"[Insert quote]"</em>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- ════════════ REFERENCES ════════════ -->
+    <div class="sec">
+      <div class="sec-title">
+        <span class="sec-num-badge">R</span>
+        <h2>References</h2>
+      </div>
+
+      <ul class="ref-list">
+        <li>Bartneck, C., Kulić, D., Croft, E., &amp; Zoghbi, S. (2009). Measurement instruments for the anthropomorphism, animacy, likeability, perceived intelligence, and perceived safety of robots. <em>International Journal of Social Robotics</em>, 1(1), 71–81.</li>
+        <li>Bickmore, T. W., &amp; Picard, R. W. (2005). Establishing and maintaining long-term human-computer relationships. <em>ACM Transactions on Computer-Human Interaction</em>, 12(2), 293–327.</li>
+        <li>Braun, V., &amp; Clarke, V. (2006). Using thematic analysis in psychology. <em>Qualitative Research in Psychology</em>, 3(2), 77–101.</li>
+        <li>Fong, T., Nourbakhsh, I., &amp; Dautenhahn, K. (2003). A survey of socially interactive robots. <em>Robotics and Autonomous Systems</em>, 42(3–4), 143–166.</li>
+        <li>Heerink, M., Kröse, B., Evers, V., &amp; Wielinga, B. (2010). Assessing acceptance of assistive social agent technology by older adults. <em>International Journal of Social Robotics</em>, 2(4), 361–375.</li>
+        <li>Kendon, A. (1967). Some functions of gaze-direction in social interaction. <em>Acta Psychologica</em>, 26, 22–63.</li>
+        <li>Mutlu, B., Shiwa, T., Kanda, T., Ishiguro, H., &amp; Hagita, N. (2009). Footing in human-robot conversations: How robots might shape participant roles using gaze cues. <em>Proceedings of the 4th ACM/IEEE International Conference on Human-Robot Interaction (HRI '09)</em>, 61–68.</li>
+      </ul>
+    </div>
+
+    <hr>
+
+    <!-- ════════════ APPENDIX ════════════ -->
+    <div class="sec">
+      <div class="sec-title">
+        <span class="sec-num-badge">A</span>
+        <h2>Appendix</h2>
+      </div>
+      <p style="font-family:'Segoe UI',Arial,sans-serif;font-size:10pt;color:#555;">The following study paperwork should be attached as additional pages to the submitted PDF:</p>
+      <ul class="checklist">
+        <li><span class="check-box"></span>Participant Information Sheet</li>
+        <li><span class="check-box"></span>Informed Consent Form</li>
+        <li><span class="check-box"></span>Task Card (6 prompts given to participant)</li>
+        <li><span class="check-box"></span>Godspeed Questionnaire (printed)</li>
+        <li><span class="check-box"></span>Perceived Helpfulness Scale (printed)</li>
+        <li><span class="check-box"></span>Post-Study Interview Question Sheet</li>
+        <li><span class="check-box"></span>Debriefing Sheet</li>
+      </ul>
+    </div>
+
+  </div><!-- /body -->
+</div><!-- /page-wrap -->
+
+</body>
+</html>

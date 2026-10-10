@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDR2 – System Design | NAO Nutrition Assistant</title>
+<style>
+  :root {
+    --bg:       #0f1117;
+    --surface:  #161b27;
+    --card:     #1e2535;
+    --border:   #2d3550;
+    --accent:   #4f8ef7;
+    --green:    #3ecf8e;
+    --purple:   #a78bfa;
+    --orange:   #f59e0b;
+    --red:      #f87171;
+    --text:     #e2e8f0;
+    --dim:      #718096;
+    --code-bg:  #0d1117;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding-bottom: 80px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0f1117 0%, #1a1f35 50%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 40px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(79,142,247,0.08) 0%, transparent 70%);
+    top: -200px; left: 50%; transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .hero-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #4f8ef7, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.25;
+    max-width: 720px;
+    margin: 0 auto 16px;
+  }
+  .hero-sub {
+    color: var(--dim);
+    font-size: 0.92rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .meta-pills {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  .pill {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--dim);
+  }
+  .pill.blue  { border-color: rgba(79,142,247,0.4);  color: var(--accent); background: rgba(79,142,247,0.08); }
+  .pill.green { border-color: rgba(62,207,142,0.4);  color: var(--green);  background: rgba(62,207,142,0.08); }
+  .pill.purple{ border-color: rgba(167,139,250,0.4); color: var(--purple); background: rgba(167,139,250,0.08);}
+
+  /* ── LAYOUT ── */
+  .page { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── SECTION HEADER ── */
+  .sec-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 52px 0 24px;
+  }
+  .sec-num {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #000;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sec-head h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .sec-head .badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 10px;
+    background: rgba(79,142,247,0.1);
+    border: 1px solid rgba(79,142,247,0.3);
+    color: var(--accent);
+  }
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 28px 0 10px;
+  }
+  p { color: #cbd5e0; margin-bottom: 12px; }
+
+  /* ── ARCHITECTURE DIAGRAM ── */
+  .arch-diagram {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 24px;
+    margin: 20px 0 32px;
+    overflow-x: auto;
+  }
+  .arch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-width: 680px;
+  }
+  .arch-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 148px;
+  }
+  .arch-box {
+    width: 128px;
+    padding: 14px 10px;
+    border-radius: 12px;
+    border: 1.5px solid;
+    text-align: center;
+    position: relative;
+  }
+  .arch-box .icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+  .arch-box .title { font-size: 0.78rem; font-weight: 700; }
+  .arch-box .file  { font-size: 0.66rem; opacity: 0.7; margin-top: 2px; font-family: monospace; }
+  .arch-box .lang  { font-size: 0.62rem; margin-top: 4px; padding: 2px 6px; border-radius: 6px; background: rgba(0,0,0,0.3); }
+
+  .arch-box.pc     { border-color: var(--accent);  background: rgba(79,142,247,0.08); }
+  .arch-box.nao    { border-color: var(--green);   background: rgba(62,207,142,0.08); }
+  .arch-box.srv    { border-color: var(--purple);  background: rgba(167,139,250,0.08);}
+  .arch-box.llm    { border-color: var(--orange);  background: rgba(245,158,11,0.08); }
+
+  .arch-arrow {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 0 4px;
+    min-width: 70px;
+  }
+  .arrow-line {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--border), var(--accent), var(--border));
+    border-radius: 1px;
+    position: relative;
+  }
+  .arrow-line::after {
+    content: '▶';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    color: var(--accent);
+  }
+  .arrow-proto {
+    font-size: 0.65rem;
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .arrow-port {
+    font-size: 0.62rem;
+    color: var(--dim);
+    font-family: monospace;
+  }
+
+  /* ── FEATURE CARDS ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0 28px;
+  }
+  @media (max-width: 720px) { .feature-grid { grid-template-columns: 1fr; } }
+
+  .feat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .feat-card:hover { border-color: var(--accent); }
+  .feat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+  .feat-card.llm-card::before  { background: linear-gradient(90deg, var(--accent), var(--purple)); }
+  .feat-card.mem-card::before  { background: linear-gradient(90deg, var(--green), #38bdf8); }
+  .feat-card.pers-card::before { background: linear-gradient(90deg, var(--orange), var(--red)); }
+
+  .feat-icon { font-size: 1.8rem; margin-bottom: 10px; }
+  .feat-title { font-size: 0.92rem; font-weight: 700; margin-bottom: 6px; }
+  .feat-desc  { font-size: 0.82rem; color: var(--dim); line-height: 1.55; }
+  .feat-tags  { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+  .feat-tag {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-family: monospace;
+  }
+
+  /* ── PIPELINE FLOW ── */
+  .pipeline {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin: 16px 0 28px;
+  }
+  .pipe-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    position: relative;
+    padding-bottom: 20px;
+  }
+  .pipe-step:last-child { padding-bottom: 0; }
+  .pipe-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 38px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .pipe-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+    flex-shrink: 0;
+    background: var(--bg);
+    z-index: 1;
+  }
+  .pipe-num.c-blue   { border-color: var(--accent); color: var(--accent); }
+  .pipe-num.c-green  { border-color: var(--green);  color: var(--green);  }
+  .pipe-num.c-purple { border-color: var(--purple); color: var(--purple); }
+  .pipe-num.c-orange { border-color: var(--orange); color: var(--orange); }
+  .pipe-content strong { font-size: 0.88rem; color: var(--text); display: block; margin-bottom: 3px; }
+  .pipe-content span   { font-size: 0.8rem;  color: var(--dim); line-height: 1.5; }
+  .pipe-content code {
+    font-family: 'Cascadia Code', Consolas, monospace;
+    font-size: 0.78rem;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: #79c0ff;
+  }
+
+  /* ── MESSAGE FORMAT BOX ── */
+  .msg-box {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    font-family: 'Cascadia Code', Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    margin: 16px 0 24px;
+    overflow-x: auto;
+  }
+  .msg-comment { color: var(--dim); }
+  .msg-key     { color: #79c0ff; }
+  .msg-str     { color: #a5d6ff; }
+  .msg-role    { color: var(--green); }
+  .msg-content { color: #ffa657; }
+  .msg-tag     { color: var(--purple); }
+
+  /* ── MEMORY DIAGRAM ── */
+  .memory-diagram {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin: 16px 0 28px;
+  }
+  @media (max-width: 600px) { .memory-diagram { grid-template-columns: 1fr; } }
+
+  .mem-box {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--bg);
+  }
+  .mem-box-title { font-size: 0.75rem; font-weight: 700; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .mem-entry {
+    font-size: 0.76rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    margin-bottom: 5px;
+    color: var(--text);
+  }
+  .mem-entry:last-child { margin-bottom: 0; }
+  .mem-arrow {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--dim);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .mem-arrow .arr { font-size: 1.4rem; color: var(--accent); }
+  .mem-arrow .lbl { font-size: 0.68rem; white-space: nowrap; }
+
+  /* ── CONDITION TABLE ── */
+  .cond-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 28px;
+    font-size: 0.84rem;
+  }
+  .cond-table th {
+    padding: 10px 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .cond-table td {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    color: #cbd5e0;
+    vertical-align: top;
+  }
+  .cond-table tr:nth-child(odd) td  { background: rgba(255,255,255,0.015); }
+  .cond-table tr:hover td { background: rgba(79,142,247,0.05); }
+  .tag-a { color: var(--orange); font-weight: 600; }
+  .tag-b { color: var(--green);  font-weight: 600; }
+
+  /* ── ACTION TAGS ── */
+  .tag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 28px;
+  }
+  .action-tag {
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-family: monospace;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--dim);
+    transition: all 0.15s;
+    cursor: default;
+  }
+  .action-tag:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: rgba(79,142,247,0.08);
+  }
+
+  /* ── CALL OUT ── */
+  .callout {
+    border-left: 3px solid;
+    padding: 12px 16px;
+    border-radius: 0 10px 10px 0;
+    margin: 16px 0 24px;
+    font-size: 0.84rem;
+  }
+  .callout.blue   { border-color: var(--accent); background: rgba(79,142,247,0.07); }
+  .callout.green  { border-color: var(--green);  background: rgba(62,207,142,0.07); }
+  .callout.orange { border-color: var(--orange); background: rgba(245,158,11,0.07); }
+  .callout strong { color: var(--text); }
+  .callout p { margin: 0; color: #a0aec0; }
+
+  /* ── DIVIDER ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 32px;
+    color: var(--dim);
+    font-size: 0.78rem;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">UWE UFMFHP-15-M · Study Design Report 2</div>
+  <h1>System Design<br>NAO Nutrition Assistant</h1>
+  <p class="hero-sub">Does Visual Perception in a Social Robot Nutrition Assistant Improve User Experience?</p>
+  <div class="meta-pills">
+    <span class="pill blue">Section 3 of SDR2</span>
+    <span class="pill green">LLM-Powered</span>
+    <span class="pill purple">Multi-Modal</span>
+    <span class="pill">Deadline: 14 May 2026</span>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SECTION 3.1 – DIALOGUE PIPELINE       -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="sec-head">
+    <div class="sec-num">3.1</div>
+    <h2>Dialogue Pipeline</h2>
+    <span class="badge">Core Architecture</span>
+  </div>
+
+  <p>The system is built across <strong>three networked layers</strong>, enabling real-time spoken conversation between a user and a NAO humanoid robot, with responses generated by a cloud-hosted large language model (LLM). The key innovation over a standard scripted robot is that every reply is produced dynamically by Qwen — a state-of-the-art LLM from Alibaba — conditioned on the user's full conversation history, dietary log, and (in Condition B) a live camera image.</p>
+
+  <!-- Architecture Diagram -->
+  <div class="arch-diagram">
+    <div class="arch-row">
+      <div class="arch-node">
+        <div class="arch-box pc">
+          <span class="icon">🖥️</span>
+          <div class="title">PC Voice Proxy</div>
+          <div class="file">pc_voice_proxy.py</div>
+          <div class="lang">Python 3 · PyAudio</div>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <div class="arrow-proto">TCP</div>
+        <div class="arrow-line"></div>
+        <div class="arrow-port">:9998</div>
+      </div>
+      <div class="arch-node">
+        <div class="arch-box nao">
+          <span class="icon">🤖</span>
+          <div class="title">NAO Robot</div>
+          <div class="file">robot_client.py</div>
+          <div class="lang">Python 2.7 · NAOqi</div>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <div class="arrow-proto">TCP</div>
+        <div class="arrow-line"></div>
+        <div class="arrow-port">:9999</div>
+      </div>
+      <div class="arch-node">
+        <div class="arch-box srv">
+          <span class="icon">💻</span>
+          <div class="title">AI Server</div>
+          <div class="file">server_brain.py</div>
+          <div class="lang">Python 3 · LLM Gateway</div>
+        </div>
+      </div>
+      <div class="arch-arrow">
+        <div class="arrow-proto">HTTPS</div>
+        <div class="arrow-line"></div>
+        <div class="arrow-port">:443</div>
+      </div>
+      <div class="arch-node">
+        <div class="arch-box llm">
+          <span class="icon">☁️</span>
+          <div class="title">Qwen API</div>
+          <div class="file">DashScope Cloud</div>
+          <div class="lang">qwen-plus / vl / audio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step-by-step pipeline -->
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-num c-blue">1</div>
+      <div class="pipe-content">
+        <strong>Speech Capture &amp; Recognition (PC)</strong>
+        <span>The user holds the Space key to speak. <code>pc_voice_proxy.py</code> records audio via PyAudio and calls the Google Speech-to-Text API to obtain a text transcript. Vision keywords (<em>look, see, this</em>) are detected to set <code>needs_vision = true</code>.</span>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num c-blue">2</div>
+      <div class="pipe-content">
+        <strong>Command Relay: PC → NAO (TCP :9998)</strong>
+        <span>The text and vision flag are sent as a JSON message over TCP to <code>robot_client.py</code> on NAO. A <code>\n</code> delimiter solves the TCP stream boundary problem, enabling reliable message framing without HTTP overhead — critical because NAO runs Python 2.7.</span>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num c-green">3</div>
+      <div class="pipe-content">
+        <strong>Condition-Dependent Image Capture (NAO)</strong>
+        <span><strong>Condition B:</strong> NAO says <em>"Let me take a look"</em>, captures a VGA image via <code>ALVideoDevice</code>, compresses to JPEG (quality 85, ~20–50 KB), and Base64-encodes it for transmission. <strong>Condition A:</strong> NAO says <em>"I cannot see things around me"</em> — no image is taken.</span>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num c-green">4</div>
+      <div class="pipe-content">
+        <strong>Request Relay: NAO → Server (TCP :9999)</strong>
+        <span><code>robot_client.py</code> opens a short TCP connection to <code>server_brain.py</code>, sending text (and Base64 image if captured) as a single JSON payload. The connection remains open — with a 30-second timeout — to await the LLM response.</span>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num c-purple">5</div>
+      <div class="pipe-content">
+        <strong>LLM Query Construction (Server)</strong>
+        <span>The server assembles a <strong>ChatML message array</strong>: a system prompt (personality + nutrition knowledge base + dietary log + vision persona if Condition B), intelligently retrieved conversation history (up to 5 of the 30 most semantically relevant turns), and the current user message — with optional image data.</span>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num c-orange">6</div>
+      <div class="pipe-content">
+        <strong>Qwen API Call (HTTPS)</strong>
+        <span>The server POSTs to the appropriate Qwen model: <code>qwen-plus</code> (text only) or <code>qwen-vl-plus</code> (with image). The response contains natural-language text plus a self-selected action tag, e.g. <code>[ACTION:nod]</code>, chosen by the LLM itself from 22 available gestures.</span>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num c-purple">7</div>
+      <div class="pipe-content">
+        <strong>Response Parse &amp; Return</strong>
+        <span>The server strips the <code>[ACTION:tag]</code> with a regex, saves the exchange to conversation history, and returns clean text + action tag to NAO over the open TCP socket.</span>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num c-green">8</div>
+      <div class="pipe-content">
+        <strong>Parallel TTS + Gesture Execution (NAO)</strong>
+        <span>Two threads launch simultaneously: <code>ALTextToSpeech</code> speaks the response while <code>ALAnimationPlayer</code> performs the corresponding gesture — producing natural synchronised embodied communication.</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- KEY INNOVATION: LLM                   -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="sec-head">
+    <div class="sec-num" style="background:var(--purple)">★</div>
+    <h2>Key Technical Innovations</h2>
+  </div>
+
+  <div class="feature-grid">
+    <!-- LLM -->
+    <div class="feat-card llm-card">
+      <div class="feat-icon">🧠</div>
+      <div class="feat-title">LLM-Powered Dialogue</div>
+      <div class="feat-desc">Every response is generated dynamically by <strong>Qwen</strong> (Alibaba DashScope), a large language model comparable to GPT-4. Unlike scripted robots, NAO produces contextually appropriate, open-ended answers to any nutrition question. The LLM also self-selects the most fitting body gesture from 22 options.</div>
+      <div class="feat-tags">
+        <span class="feat-tag">qwen-plus</span>
+        <span class="feat-tag">qwen-vl-plus</span>
+        <span class="feat-tag">ChatML format</span>
+        <span class="feat-tag">60-word limit</span>
+      </div>
+    </div>
+    <!-- Memory -->
+    <div class="feat-card mem-card">
+      <div class="feat-icon">💾</div>
+      <div class="feat-title">Persistent Memory System</div>
+      <div class="feat-desc">The server maintains a <strong>rolling conversation history</strong> (30 turns) per participant IP address. An intelligent retrieval algorithm scores each historical turn by semantic relevance to the current question, injecting the 5 most relevant turns into each LLM call — enabling personalised, context-aware replies throughout the session.</div>
+      <div class="feat-tags">
+        <span class="feat-tag">30-turn window</span>
+        <span class="feat-tag">keyword scoring</span>
+        <span class="feat-tag">top-5 retrieval</span>
+        <span class="feat-tag">per-IP isolation</span>
+      </div>
+    </div>
+    <!-- Personalisation -->
+    <div class="feat-card pers-card">
+      <div class="feat-icon">🥗</div>
+      <div class="feat-title">Personalised Nutrition Q&amp;A</div>
+      <div class="feat-desc">The server automatically detects eating verbs (<em>had, ate, eaten, drank</em>) and meal-time references in user speech, building a <strong>live dietary log</strong> for the session. This log is injected into every system prompt, so NAO's dinner recommendation genuinely accounts for what the user ate at breakfast and lunch.</div>
+      <div class="feat-tags">
+        <span class="feat-tag">food logging</span>
+        <span class="feat-tag">meal-time detection</span>
+        <span class="feat-tag">diet context injection</span>
+        <span class="feat-tag">NUTRITION_KNOWLEDGE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ChatML message format -->
+  <h3>LLM Message Format (ChatML)</h3>
+  <p>Each API call sends a structured message array. The system prompt is dynamically assembled per request, combining four components:</p>
+
+  <div class="msg-box"><span class="msg-comment">// ChatML array sent to Qwen API on every turn</span>
+[
+  {
+    <span class="msg-key">"role"</span>: <span class="msg-role">"system"</span>,
+    <span class="msg-key">"content"</span>: <span class="msg-content">"You are NAO, a smart nutrition assistant robot.
+              [PERSONALITY: friendly]
+              [NUTRITION_KNOWLEDGE: balanced diet facts, &lt;60 word reply limit]
+              [VISION_PERSONA: comment on visible food — Condition B only]
+              [DIET_LOG: Breakfast: two eggs and toast]"</span>
+  },
+  {
+    <span class="msg-key">"role"</span>: <span class="msg-role">"user"</span>,        <span class="msg-comment">// ← retrieved from history (turn N-3)</span>
+    <span class="msg-key">"content"</span>: <span class="msg-content">"I had two eggs and toast for breakfast."</span>
+  },
+  {
+    <span class="msg-key">"role"</span>: <span class="msg-role">"assistant"</span>,   <span class="msg-comment">// ← retrieved from history (turn N-3 response)</span>
+    <span class="msg-key">"content"</span>: <span class="msg-content">"Great start! Eggs are an excellent protein source. <span class="msg-tag">[ACTION:thumbsUp]</span>"</span>
+  },
+  {
+    <span class="msg-key">"role"</span>: <span class="msg-role">"user"</span>,        <span class="msg-comment">// ← current turn (with image for Condition B)</span>
+    <span class="msg-key">"content"</span>: [
+      { <span class="msg-key">"text"</span>: <span class="msg-content">"Look — is this a healthy lunch?"</span> },
+      { <span class="msg-key">"image"</span>: <span class="msg-content">"data:image/jpeg;base64,/9j/4AAQ..."</span> }
+    ]
+  }
+]</div>
+
+  <!-- Memory Diagram -->
+  <h3>Intelligent Memory Retrieval</h3>
+  <div class="memory-diagram">
+    <div class="mem-box">
+      <div class="mem-box-title">Full History (30 turns)</div>
+      <div class="mem-entry">T1: "Hi Nao, nice to meet you"</div>
+      <div class="mem-entry">T2: "I had eggs for breakfast"</div>
+      <div class="mem-entry">T3: "Is this lunch healthy?" 🖼️</div>
+      <div class="mem-entry">T4: "What for dinner?"</div>
+      <div class="mem-entry">T5: "Key nutrients to focus on?"</div>
+    </div>
+    <div class="mem-arrow">
+      <div class="arr">→</div>
+      <div class="lbl">Relevance</div>
+      <div class="lbl">scoring</div>
+      <div class="lbl">(keyword match)</div>
+    </div>
+    <div class="mem-box">
+      <div class="mem-box-title">Injected into LLM (top 5)</div>
+      <div class="mem-entry" style="border-color:rgba(62,207,142,0.4);color:var(--green)">T2: "I had eggs for breakfast" ★</div>
+      <div class="mem-entry" style="border-color:rgba(62,207,142,0.4);color:var(--green)">T3: "Is this lunch healthy?" ★</div>
+      <div class="mem-entry" style="border-color:rgba(62,207,142,0.4);color:var(--green)">T4: "What for dinner?" ★</div>
+      <div class="mem-entry">T1: greeting (lower priority)</div>
+    </div>
+  </div>
+
+  <div class="callout green">
+    <p><strong>Why this matters for the study:</strong> Because NAO genuinely remembers what the user ate earlier in the same session, its dinner recommendation at Task 4 is meaningfully personalised — not a generic suggestion. This is a testable capability that contributes to perceived intelligence and helpfulness ratings.</p>
+  </div>
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SECTION 3.2 – NON-VERBAL BEHAVIOURS   -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="sec-head">
+    <div class="sec-num">3.2</div>
+    <h2>Non-Verbal Communication Behaviours</h2>
+  </div>
+
+  <p>Rather than using a fixed rule-based mapping from keywords to gestures, the system delegates action selection to the LLM itself. Each Qwen response is instructed to end with a self-chosen <code>[ACTION:tag]</code>. The server extracts this tag via regex and dispatches the corresponding NAO animation, running in a dedicated thread parallel to speech.</p>
+
+  <div class="tag-grid">
+    <span class="action-tag">greeting</span>
+    <span class="action-tag">wave</span>
+    <span class="action-tag">nod</span>
+    <span class="action-tag">think</span>
+    <span class="action-tag">explain</span>
+    <span class="action-tag">point</span>
+    <span class="action-tag">thumbsUp</span>
+    <span class="action-tag">celebrate</span>
+    <span class="action-tag">sorry</span>
+    <span class="action-tag">sad</span>
+    <span class="action-tag">confused</span>
+    <span class="action-tag">bow</span>
+    <span class="action-tag">stretch</span>
+    <span class="action-tag">sitDown</span>
+    <span class="action-tag">standUp</span>
+    <span class="action-tag">dance</span>
+    <span class="action-tag">clap</span>
+    <span class="action-tag">shakeHead</span>
+    <span class="action-tag">lookAround</span>
+    <span class="action-tag">airGuitar</span>
+    <span class="action-tag">yoga</span>
+    <span class="action-tag">neutral</span>
+  </div>
+
+  <div class="callout blue">
+    <p><strong>Parallel execution:</strong> <code>ALAnimationPlayer</code> (gesture) and <code>ALTextToSpeech</code> (speech) run as separate threads, launched simultaneously via Python's <code>threading.Thread</code>. The main thread joins both, ensuring NAO waits for the full response before accepting new input.</p>
+  </div>
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SECTION 3.3 – VISUAL PERCEPTION       -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="sec-head">
+    <div class="sec-num">3.3</div>
+    <h2>Human Perception &amp; Autonomous Visual Response</h2>
+    <span class="badge">Condition B only</span>
+  </div>
+
+  <p>The experimental manipulation centres on the robot's ability to perceive its physical environment. The system continuously monitors user speech for vision-trigger keywords. When detected, NAO autonomously captures and analyses a real-time image — the primary difference between conditions.</p>
+
+  <table class="cond-table">
+    <tr>
+      <th>Aspect</th>
+      <th>Condition A — Control (<span class="tag-a">no_vision</span>)</th>
+      <th>Condition B — Experimental (<span class="tag-b">vision</span>)</th>
+    </tr>
+    <tr>
+      <td>Vision trigger</td>
+      <td>Detected but ignored</td>
+      <td>Triggers autonomous image capture</td>
+    </tr>
+    <tr>
+      <td>NAO verbal response</td>
+      <td><em>"I cannot see things around me. Please tell me what you have."</em></td>
+      <td><em>"Let me take a look."</em></td>
+    </tr>
+    <tr>
+      <td>Camera action</td>
+      <td>No photo taken</td>
+      <td>VGA 640×480 JPEG captured via ALVideoDevice</td>
+    </tr>
+    <tr>
+      <td>Data transmitted to server</td>
+      <td><code>image_data: null</code></td>
+      <td><code>image_data: "&lt;Base64 JPEG, ~20–50 KB&gt;"</code></td>
+    </tr>
+    <tr>
+      <td>LLM model used</td>
+      <td><code>qwen-plus</code> (text only)</td>
+      <td><code>qwen-vl-plus</code> (vision-language)</td>
+    </tr>
+    <tr>
+      <td>System prompt addition</td>
+      <td>None</td>
+      <td>+<code>VISION_PERSONA</code>: instructs LLM to comment on visible food and appearance naturally</td>
+    </tr>
+    <tr>
+      <td>Server safety net</td>
+      <td>Forces <code>image_data = None</code> even if image sent by mistake</td>
+      <td>Image data passed through to vision API</td>
+    </tr>
+  </table>
+
+  <div class="callout orange">
+    <p><strong>Double-layer condition control:</strong> The <code>EXPERIMENT_CONDITION</code> flag is set identically in both <code>robot_client.py</code> and <code>server_brain.py</code>. The robot layer controls physical behaviour (whether to take a photo), and the server layer enforces the same condition independently — preventing any accidental cross-contamination of conditions even if the hardware behaves unexpectedly.</p>
+  </div>
+
+  <hr>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:8px;">
+    <div style="font-size:0.8rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">System Components Summary</div>
+    <table class="cond-table" style="margin:0">
+      <tr>
+        <th>File</th>
+        <th>Layer</th>
+        <th>Python</th>
+        <th>Key Responsibilities</th>
+      </tr>
+      <tr>
+        <td><code>pc_voice_proxy.py</code></td>
+        <td>User Input</td>
+        <td>3.x</td>
+        <td>PyAudio capture · Google STT · vision keyword detection</td>
+      </tr>
+      <tr>
+        <td><code>robot_client.py</code></td>
+        <td>Hardware Execution</td>
+        <td>2.7 (NAOqi)</td>
+        <td>TTS · camera · gesture execution · TCP relay</td>
+      </tr>
+      <tr>
+        <td><code>server_brain.py</code></td>
+        <td>AI Gateway</td>
+        <td>3.x</td>
+        <td>LLM calls · memory system · food logging · condition control</td>
+      </tr>
+      <tr>
+        <td>Qwen DashScope API</td>
+        <td>Cloud LLM</td>
+        <td>—</td>
+        <td>Natural language generation · vision-language understanding</td>
+      </tr>
+    </table>
+  </div>
+
+</div><!-- /page -->
+
+<footer>
+  UWE UFMFHP-15-M · Human-Robot Interaction Module · SDR2 Section 3 — System Design<br>
+  NAO Robot Nutrition Assistant · University of Bristol · 2026
+</footer>
+
+</body>
+</html>

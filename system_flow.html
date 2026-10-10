@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAO Robot HRI System — 交互流程演示</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --purple: #bc8cff;
+    --red: #f85149;
+    --text: #c9d1d9;
+    --text-dim: #6e7681;
+    --packet: #58a6ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ═══ HEADER ═══ */
+  header {
+    text-align: center;
+    padding: 32px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #1a2332 0%, var(--bg) 100%);
+  }
+  header h1 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  header p {
+    color: var(--text-dim);
+    margin-top: 6px;
+    font-size: 0.9rem;
+  }
+
+  /* ═══ CONDITION TOGGLE ═══ */
+  .condition-bar {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    flex-wrap: wrap;
+  }
+  .cond-btn {
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .cond-btn.active-a {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: rgba(210,153,34,0.1);
+  }
+  .cond-btn.active-b {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(63,185,80,0.1);
+  }
+  .condition-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ═══ MAIN DIAGRAM ═══ */
+  .diagram-wrapper {
+    padding: 20px 16px 0;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .diagram {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 40px 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  /* background grid */
+  .diagram::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(88,166,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(88,166,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* ═══ NODE ═══ */
+  .node {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 130px;
+  }
+
+  .node-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .node-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .node.active .node-icon {
+    transform: scale(1.08);
+    box-shadow: 0 0 24px currentColor;
+  }
+
+  .node.node-pc .node-icon    { border-color: var(--accent); color: var(--accent); }
+  .node.node-nao .node-icon   { border-color: var(--green);  color: var(--green);  }
+  .node.node-srv .node-icon   { border-color: var(--purple); color: var(--purple); }
+  .node.node-llm .node-icon   { border-color: var(--orange); color: var(--orange); }
+
+  .node.active.node-pc  .node-icon { box-shadow: 0 0 24px var(--accent); }
+  .node.active.node-nao .node-icon { box-shadow: 0 0 24px var(--green);  }
+  .node.active.node-srv .node-icon { box-shadow: 0 0 24px var(--purple); }
+  .node.active.node-llm .node-icon { box-shadow: 0 0 24px var(--orange); }
+
+  .node-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  .node-sub {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.4;
+  }
+  .node-badge {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: rgba(88,166,255,0.1);
+    border: 1px solid rgba(88,166,255,0.3);
+    color: var(--accent);
+  }
+
+  /* ═══ CONNECTOR ═══ */
+  .connector {
+    flex: 1;
+    position: relative;
+    height: 60px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .conn-line {
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .conn-line-back {
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    position: relative;
+    overflow: hidden;
+    opacity: 0.5;
+  }
+
+  /* flowing packet animation */
+  .conn-line .flow-fwd,
+  .conn-line-back .flow-bwd {
+    position: absolute;
+    top: 0; left: -40%;
+    width: 40%;
+    height: 100%;
+    border-radius: 1px;
+    opacity: 0;
+    transition: none;
+  }
+
+  .conn-line .flow-fwd     { background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+  .conn-line-back .flow-bwd { background: linear-gradient(90deg, transparent, var(--purple), transparent); }
+
+  .conn-line.animate .flow-fwd {
+    opacity: 1;
+    animation: slideRight 0.6s ease-in-out;
+  }
+  .conn-line-back.animate .flow-bwd {
+    opacity: 1;
+    animation: slideLeft 0.6s ease-in-out;
+  }
+
+  @keyframes slideRight {
+    from { left: -40%; } to { left: 100%; }
+  }
+  @keyframes slideLeft {
+    from { left: 100%; } to { left: -40%; }
+  }
+
+  .conn-label {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    text-align: center;
+  }
+  .conn-port {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-dim);
+  }
+
+  /* ═══ STEP PANEL ═══ */
+  .bottom-area {
+    max-width: 1100px;
+    margin: 16px auto 0;
+    padding: 0 16px 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 700px) {
+    .bottom-area { grid-template-columns: 1fr; }
+    .node { width: 90px; }
+    .node-icon { width: 56px; height: 56px; font-size: 1.5rem; }
+    .node-label { font-size: 0.75rem; }
+    .node-sub { display: none; }
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-header span { font-size: 1rem; }
+
+  /* step list */
+  .step-list {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 340px;
+    overflow-y: auto;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.45;
+  }
+  .step-item:hover { background: rgba(255,255,255,0.04); opacity: 0.75; }
+  .step-item.active {
+    background: rgba(88,166,255,0.08);
+    border-color: rgba(88,166,255,0.3);
+    opacity: 1;
+  }
+  .step-item.done { opacity: 0.7; }
+
+  .step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all 0.2s;
+  }
+  .step-item.active .step-num {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #000;
+  }
+  .step-item.done .step-num {
+    border-color: var(--green);
+    background: var(--green);
+    color: #000;
+  }
+  .step-text strong { font-size: 0.82rem; display: block; margin-bottom: 2px; }
+  .step-text span   { font-size: 0.75rem; color: var(--text-dim); line-height: 1.4; }
+
+  /* JSON viewer */
+  .json-view {
+    padding: 14px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 340px;
+    overflow-y: auto;
+    color: var(--text);
+  }
+  .json-key   { color: #79c0ff; }
+  .json-str   { color: #a5d6ff; }
+  .json-str-long { color: #6e7681; }
+  .json-num   { color: #ff7b72; }
+  .json-bool  { color: var(--orange); }
+  .json-title {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ═══ CONTROLS ═══ */
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 16px 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .btn.primary:hover { background: #79c0ff; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* progress bar */
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    max-width: 1100px;
+    margin: 0 auto 12px;
+    border-radius: 2px;
+    padding: 0 16px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  /* pulse ring */
+  @keyframes pulse {
+    0%   { transform: scale(1);   opacity: 0.8; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  .pulse-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    border: 2px solid currentColor;
+    animation: pulse 1s ease-out infinite;
+    pointer-events: none;
+  }
+
+  /* vision badge */
+  .vision-overlay {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--green);
+    color: #000;
+    font-weight: bold;
+    border: 2px solid var(--bg);
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>NAO Robot HRI System</h1>
+  <p>社交机器人营养助手系统 — 完整数据流动态演示</p>
+</header>
+
+<!-- Condition Toggle -->
+<div class="condition-bar">
+  <div class="condition-label">
+    <div class="dot" style="background:var(--accent)"></div>
+    实验条件：
+  </div>
+  <button class="cond-btn" id="btnA" onclick="setCondition('no_vision')">
+    Condition A — 无视觉（控制组）
+  </button>
+  <button class="cond-btn" id="btnB" onclick="setCondition('vision')">
+    Condition B — 有视觉（实验组）
+  </button>
+</div>
+
+<!-- Architecture Diagram -->
+<div class="diagram-wrapper">
+  <div class="diagram" id="diagram">
+
+    <!-- PC Node -->
+    <div class="node node-pc" id="node-pc">
+      <div class="node-icon">🖥️</div>
+      <div class="node-label">PC Voice Proxy</div>
+      <div class="node-sub">pc_voice_proxy.py<br>PyAudio + Google STT</div>
+      <div class="node-badge">Port 9998</div>
+    </div>
+
+    <!-- PC → NAO -->
+    <div class="connector" id="conn-pc-nao">
+      <div class="conn-label">发送指令</div>
+      <div class="conn-line" id="line-pc-nao"><div class="flow-fwd"></div></div>
+      <div class="conn-line-back" id="line-nao-pc" style="display:none"><div class="flow-bwd"></div></div>
+      <div class="conn-port">TCP 9998</div>
+    </div>
+
+    <!-- NAO Node -->
+    <div class="node node-nao" id="node-nao">
+      <div class="node-icon">🤖
+        <div class="vision-overlay" id="vision-badge" style="display:none">📷</div>
+      </div>
+      <div class="node-label">NAO Robot</div>
+      <div class="node-sub">5.py · Python 2.7<br>NAOqi SDK</div>
+      <div class="node-badge">Port 9999</div>
+    </div>
+
+    <!-- NAO → Server -->
+    <div class="connector" id="conn-nao-srv">
+      <div class="conn-label">转发请求</div>
+      <div class="conn-line" id="line-nao-srv"><div class="flow-fwd"></div></div>
+      <div class="conn-line-back" id="line-srv-nao"><div class="flow-bwd"></div></div>
+      <div class="conn-port">TCP 9999</div>
+    </div>
+
+    <!-- Server Node -->
+    <div class="node node-srv" id="node-srv">
+      <div class="node-icon">💻</div>
+      <div class="node-label">Server Brain</div>
+      <div class="node-sub">server_brain.py<br>Python 3 · 记忆&人格</div>
+      <div class="node-badge">LLM Gateway</div>
+    </div>
+
+    <!-- Server → LLM -->
+    <div class="connector" id="conn-srv-llm">
+      <div class="conn-label">API 调用</div>
+      <div class="conn-line" id="line-srv-llm"><div class="flow-fwd"></div></div>
+      <div class="conn-line-back" id="line-llm-srv"><div class="flow-bwd"></div></div>
+      <div class="conn-port">HTTPS</div>
+    </div>
+
+    <!-- LLM Node -->
+    <div class="node node-llm" id="node-llm">
+      <div class="node-icon">☁️</div>
+      <div class="node-label">Qwen API</div>
+      <div class="node-sub">qwen-plus / vl / audio<br>DashScope Cloud</div>
+      <div class="node-badge">AI Model</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Progress Bar -->
+<div style="max-width:1100px;margin:16px auto 0;padding:0 16px;">
+  <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls" style="margin-top:14px;">
+  <button class="btn" onclick="prevStep()" id="btnPrev" disabled>← 上一步</button>
+  <button class="btn primary" onclick="playAll()" id="btnPlay">▶ 自动播放</button>
+  <button class="btn" onclick="nextStep()" id="btnNext">下一步 →</button>
+  <button class="btn" onclick="resetFlow()" id="btnReset">↺ 重置</button>
+</div>
+
+<!-- Bottom Panels -->
+<div class="bottom-area">
+
+  <!-- Step List -->
+  <div class="panel">
+    <div class="panel-header"><span>📋</span> 流程步骤</div>
+    <div class="step-list" id="stepList"></div>
+  </div>
+
+  <!-- JSON Viewer -->
+  <div class="panel">
+    <div class="panel-header"><span>📦</span> 数据载荷 (Payload)</div>
+    <div class="json-view" id="jsonView">
+      <div class="json-title">点击步骤或"下一步"查看各阶段数据包</div>
+      <span style="color:var(--text-dim)">等待开始...</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let condition = 'vision';
+let currentStep = -1;
+let autoPlayTimer = null;
+let isPlaying = false;
+
+// ══════════════════════════════════════════
+//  STEPS DEFINITION
+// ══════════════════════════════════════════
+function getSteps() {
+  const isVision = condition === 'vision';
+  return [
+    {
+      id: 0,
+      title: '用户按住 Space 开始录音',
+      desc: 'PC 上运行 pc_voice_proxy.py，PyAudio 捕获麦克风输入',
+      nodes: ['node-pc'],
+      lines: [],
+      jsonTitle: 'PC 本地状态',
+      json: {
+        "event": "recording_start",
+        "trigger": "SPACE key held",
+        "audio_device": "default microphone",
+        "sample_rate": 16000
+      }
+    },
+    {
+      id: 1,
+      title: 'Google STT 语音转文字',
+      desc: '松开 Space，PyAudio 停止录音，调用 Google Speech-to-Text API',
+      nodes: ['node-pc'],
+      lines: [],
+      jsonTitle: 'STT 识别结果',
+      json: {
+        "recognized_text": "Hi Nao, I had two slices of bread and a coffee for breakfast this morning.",
+        "confidence": 0.97,
+        "language": "en-US"
+      }
+    },
+    {
+      id: 2,
+      title: 'PC → NAO：发送文本指令',
+      desc: `PC 通过 TCP 连接 NAO 端口 9998，发送 JSON 消息。${isVision ? '视觉实验组：needs_vision=true' : '控制组：needs_vision=false'}`,
+      nodes: ['node-pc', 'node-nao'],
+      lines: [{ id: 'line-pc-nao', fwd: true }],
+      jsonTitle: 'PC → NAO  TCP JSON (\\n结尾)',
+      json: {
+        "text": "Hi Nao, I had two slices of bread and a coffee for breakfast this morning.",
+        "needs_vision": isVision,
+        "from_pc": true
+      }
+    },
+    {
+      id: 3,
+      title: isVision ? 'NAO 拍摄食物照片 📷' : 'NAO 跳过拍照（控制组）',
+      desc: isVision
+        ? 'NAO 调用 ALVideoDevice 拍照，TTS 说 "Let me take a look."，图像 Base64 编码'
+        : 'Condition A 控制组：NAO 说 "I cannot see things around me."，不拍照，image_data = None',
+      nodes: ['node-nao'],
+      lines: [],
+      jsonTitle: isVision ? 'NAO 摄像头捕获' : 'NAO 控制组行为',
+      json: isVision ? {
+        "event": "capture_image",
+        "tts": "Let me take a look.",
+        "camera": "top",
+        "resolution": "VGA_640x480",
+        "format": "JPEG",
+        "image_size_bytes": 48320,
+        "encoding": "base64"
+      } : {
+        "event": "skip_capture",
+        "EXPERIMENT_CONDITION": "no_vision",
+        "tts": "I cannot see things around me. But please tell me what you have and I will help you.",
+        "image_data": null
+      }
+    },
+    {
+      id: 4,
+      title: 'NAO → Server：转发请求',
+      desc: 'NAO 通过 TCP 连接服务器 9999 端口，转发请求（视觉组附带 Base64 图像）',
+      nodes: ['node-nao', 'node-srv'],
+      lines: [{ id: 'line-nao-srv', fwd: true }],
+      jsonTitle: 'NAO → Server  TCP JSON (\\n结尾)',
+      json: isVision ? {
+        "text": "Hi Nao, I had two slices of bread and a coffee for breakfast this morning.",
+        "image": "/9j/4AAQSkZJRgABAQAAAQABAAD...（Base64 图像，~64KB）",
+        "personality": "friendly",
+        "client_ip": "169.254.215.197"
+      } : {
+        "text": "Hi Nao, I had two slices of bread and a coffee for breakfast this morning.",
+        "image": null,
+        "personality": "friendly",
+        "client_ip": "169.254.215.197"
+      }
+    },
+    {
+      id: 5,
+      title: 'Server：提取食物 + 构建上下文',
+      desc: 'extract_food_from_text() 检测动词 "had" → 记录食物；build_diet_context() 生成饮食摘要注入 prompt',
+      nodes: ['node-srv'],
+      lines: [],
+      jsonTitle: 'Server 内部处理',
+      json: {
+        "extract_food": {
+          "eating_verb_found": "had",
+          "meal_time": "breakfast",
+          "food_recorded": "two slices of bread and a coffee"
+        },
+        "diet_context": "\n\n[Today's Diet Log]\nBreakfast: two slices of bread and a coffee",
+        "personality": "friendly",
+        "history_length": 2,
+        "smart_memories_retrieved": 2
+      }
+    },
+    {
+      id: 6,
+      title: 'Server → Qwen API：构建 Messages 数组',
+      desc: `选择模型：${isVision ? 'qwen-vl-plus（有图像）' : 'qwen-plus（纯文本）'}，组装 ChatML 格式消息列表，HTTPS POST`,
+      nodes: ['node-srv', 'node-llm'],
+      lines: [{ id: 'line-srv-llm', fwd: true }],
+      jsonTitle: `API Payload → ${isVision ? 'qwen-vl-plus' : 'qwen-plus'}`,
+      json: {
+        "model": isVision ? "qwen-vl-plus" : "qwen-plus",
+        "input": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are NAO, a smart nutrition health assistant robot... [NUTRITION_KNOWLEDGE] [ACTION_INSTRUCTION] [DIET_LOG]"
+            },
+            {
+              "role": "user",
+              "content": "Nice to meet you! (previous turn)"
+            },
+            {
+              "role": "assistant",
+              "content": "Hi! I'm NAO. [ACTION:greeting]"
+            },
+            {
+              "role": "user",
+              "content": isVision
+                ? [{"text": "I had bread and coffee for breakfast."}, {"image": "data:image/jpeg;base64,/9j/..."}]
+                : "I had bread and coffee for breakfast."
+            }
+          ]
+        },
+        "parameters": { "result_format": "message" }
+      }
+    },
+    {
+      id: 7,
+      title: 'Qwen API 推理 → 返回响应',
+      desc: 'Qwen 云端大模型处理，生成回复，末尾包含 AI 自选的 [ACTION:tag]',
+      nodes: ['node-llm', 'node-srv'],
+      lines: [{ id: 'line-srv-llm', fwd: false, back: true }],
+      jsonTitle: 'Qwen API 响应 JSON',
+      json: {
+        "output": {
+          "choices": [{
+            "message": {
+              "role": "assistant",
+              "content": isVision
+                ? "Good breakfast choice! Bread gives you energy and coffee helps you focus. I can see your meal looks balanced. For better nutrition, try adding a fruit or egg. [ACTION:nod]"
+                : "Good breakfast choice! Bread gives you energy and coffee helps you focus. For better nutrition, try adding a protein like eggs. [ACTION:nod]"
+            },
+            "finish_reason": "stop"
+          }]
+        },
+        "usage": { "input_tokens": 312, "output_tokens": 48 }
+      }
+    },
+    {
+      id: 8,
+      title: 'Server：解析 [ACTION:tag] → 回传 NAO',
+      desc: 'parse_action_from_response() 用正则提取动作标签，清理文本，保存到对话历史，发回 NAO',
+      nodes: ['node-srv', 'node-nao'],
+      lines: [{ id: 'line-nao-srv', fwd: false, back: true }],
+      jsonTitle: 'Server → NAO  TCP JSON',
+      json: {
+        "response": isVision
+          ? "Good breakfast choice! Bread gives you energy and coffee helps you focus. I can see your meal looks balanced. For better nutrition, try adding a fruit or egg."
+          : "Good breakfast choice! Bread gives you energy and coffee helps you focus. For better nutrition, try adding a protein like eggs.",
+        "action": "nod",
+        "action_source": "ai_self_select",
+        "status": "ok"
+      }
+    },
+    {
+      id: 9,
+      title: 'NAO：TTS + 动作 并行执行 ✅',
+      desc: 'action_thread (ALAnimationPlayer) + speech_thread (ALTextToSpeech) 同时启动，clean_text_for_tts() 清理文本',
+      nodes: ['node-nao'],
+      lines: [],
+      jsonTitle: 'NAO 并行执行',
+      json: {
+        "tts_thread": {
+          "module": "ALTextToSpeech",
+          "text": isVision
+            ? "Good breakfast choice! Bread gives you energy and coffee helps you focus. I can see your meal looks balanced. For better nutrition, try adding a fruit or egg."
+            : "Good breakfast choice! Bread gives you energy and coffee helps you focus. For better nutrition, try adding a protein like eggs.",
+          "language": "English"
+        },
+        "action_thread": {
+          "module": "ALAnimationPlayer",
+          "animation": "animations/Stand/Gestures/Nod_1",
+          "action_tag": "nod",
+          "parallel": true
+        },
+        "result": "✅ 交互完成，等待下一轮输入"
+      }
+    }
+  ];
+}
+
+// ══════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════
+function renderStepList() {
+  const steps = getSteps();
+  const list = document.getElementById('stepList');
+  list.innerHTML = '';
+  steps.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'step-item' +
+      (i === currentStep ? ' active' : '') +
+      (i < currentStep ? ' done' : '');
+    div.innerHTML = `
+      <div class="step-num">${i < currentStep ? '✓' : i + 1}</div>
+      <div class="step-text">
+        <strong>${s.title}</strong>
+        <span>${s.desc}</span>
+      </div>`;
+    div.onclick = () => goToStep(i);
+    list.appendChild(div);
+  });
+  // scroll active into view
+  const active = list.querySelector('.active');
+  if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function renderJson(step) {
+  const view = document.getElementById('jsonView');
+  if (!step) {
+    view.innerHTML = '<div class="json-title">等待开始...</div><span style="color:var(--text-dim)">点击步骤查看数据包</span>';
+    return;
+  }
+  view.innerHTML = `<div class="json-title">Step ${step.id + 1}/${getSteps().length} — ${step.jsonTitle}</div>` +
+    syntaxHighlight(JSON.stringify(step.json, null, 2));
+}
+
+function syntaxHighlight(json) {
+  return json
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+      let cls = 'json-num';
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = 'json-key';
+        } else {
+          cls = match.length > 80 ? 'json-str-long' : 'json-str';
+        }
+      } else if (/true|false/.test(match)) {
+        cls = 'json-bool';
+      } else if (/null/.test(match)) {
+        cls = 'json-bool';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    });
+}
+
+function updateProgress() {
+  const steps = getSteps();
+  const pct = currentStep < 0 ? 0 : ((currentStep + 1) / steps.length * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function highlightNodes(nodeIds) {
+  ['node-pc','node-nao','node-srv','node-llm'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  nodeIds.forEach(id => document.getElementById(id).classList.add('active'));
+}
+
+function animateLine(lineId, direction) {
+  const el = document.getElementById(lineId);
+  if (!el) return;
+  el.classList.remove('animate');
+  void el.offsetWidth; // reflow
+  el.classList.add('animate');
+  setTimeout(() => el.classList.remove('animate'), 700);
+}
+
+function applyStep(step) {
+  if (!step) return;
+
+  // highlight nodes
+  highlightNodes(step.nodes);
+
+  // vision badge
+  const badge = document.getElementById('vision-badge');
+  if (condition === 'vision' && step.id >= 3) {
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // animate lines
+  step.lines.forEach(l => {
+    animateLine(l.id, l.fwd ? 'fwd' : 'bwd');
+  });
+
+  // render
+  renderJson(step);
+  renderStepList();
+  updateProgress();
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+function goToStep(i) {
+  stopPlay();
+  currentStep = i;
+  const steps = getSteps();
+  applyStep(steps[currentStep]);
+  updateButtons();
+}
+
+function nextStep() {
+  const steps = getSteps();
+  if (currentStep < steps.length - 1) {
+    currentStep++;
+    applyStep(steps[currentStep]);
+  } else {
+    stopPlay();
+  }
+  updateButtons();
+}
+
+function prevStep() {
+  if (currentStep > 0) {
+    currentStep--;
+    const steps = getSteps();
+    applyStep(steps[currentStep]);
+  }
+  updateButtons();
+}
+
+function resetFlow() {
+  stopPlay();
+  currentStep = -1;
+  highlightNodes([]);
+  document.getElementById('vision-badge').style.display = 'none';
+  document.getElementById('progressFill').style.width = '0%';
+  renderStepList();
+  renderJson(null);
+  updateButtons();
+}
+
+function updateButtons() {
+  const steps = getSteps();
+  document.getElementById('btnPrev').disabled = currentStep <= 0;
+  document.getElementById('btnNext').disabled = currentStep >= steps.length - 1;
+}
+
+function playAll() {
+  if (isPlaying) { stopPlay(); return; }
+  isPlaying = true;
+  document.getElementById('btnPlay').textContent = '⏸ 暂停';
+  document.getElementById('btnPlay').classList.add('primary');
+
+  function tick() {
+    const steps = getSteps();
+    if (currentStep >= steps.length - 1) {
+      stopPlay();
+      return;
+    }
+    nextStep();
+    autoPlayTimer = setTimeout(tick, 1600);
+  }
+  autoPlayTimer = setTimeout(tick, currentStep === -1 ? 200 : 1600);
+}
+
+function stopPlay() {
+  isPlaying = false;
+  clearTimeout(autoPlayTimer);
+  document.getElementById('btnPlay').textContent = '▶ 自动播放';
+}
+
+// ══════════════════════════════════════════
+//  CONDITION
+// ══════════════════════════════════════════
+function setCondition(c) {
+  condition = c;
+  document.getElementById('btnA').className = 'cond-btn' + (c === 'no_vision' ? ' active-a' : '');
+  document.getElementById('btnB').className = 'cond-btn' + (c === 'vision'    ? ' active-b' : '');
+  resetFlow();
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+setCondition('vision');
+</script>
+
+</body>
+</html>

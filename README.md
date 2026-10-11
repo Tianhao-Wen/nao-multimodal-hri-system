@@ -227,7 +227,6 @@ This system was built for a **between-subjects HRI experiment** at the Universit
 
 - [Alibaba DashScope / Qwen](https://dashscope.aliyuncs.com) — LLM and vision-language API
 - [SoftBank Robotics NAO](https://www.softbankrobotics.com/emea/en/nao) — Robot platform
-- University of Bristol — HCI Module UFMFHP-15-M
 
 ---
 

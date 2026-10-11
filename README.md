@@ -21,7 +21,7 @@
 
 > Click the thumbnail below to watch the demo video ▶️
 
-[![Demo Video](./1.jpg)](https://github.com/ZexiLi429/NAO-LLM-HRI-Agent/raw/main/demo.mp4)
+[![Demo Video](./1.jpg)](./demo.mp4)
 
 > Or [download demo.mp4 directly](./demo.mp4)
 
@@ -255,7 +255,7 @@ NAO captures the food item using its camera and uses Qwen-VL for vision-language
 
 > Click the thumbnail below to watch an example interaction from the user study ▶️
 
-[![User Study Demo](./USER_TEST.png)](https://github.com/ZexiLi429/NAO-LLM-HRI-Agent/raw/main/user_test_video.mp4)
+[![User Study Demo](./USER_TEST.png)](./user_test_video.mp4)
 
 > [▶ Watch the full user study video](./user_test_video.mp4)
 

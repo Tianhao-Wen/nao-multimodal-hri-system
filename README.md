@@ -215,42 +215,6 @@ A total of **10 participants** completed **6 standardised interaction tasks** wi
 
 The evaluation focused on perceived helpfulness, food-item response quality, perceived intelligence, anthropomorphism, animacy, likeability, and perceived safety.
 
-### 📸 Study Setup
-
-<p align="center">
-  <img src="./assets/user_study/study_setup.jpg" width="70%" alt="NAO user study setup">
-</p>
-
-<p align="center">
-  <i>Experimental setup used for the controlled HRI evaluation.</i>
-</p>
-
-### 🤖 Real User Interaction
-
-<table>
-<tr>
-<td width="50%" align="center">
-
-**Vision-Disabled Condition**
-
-<img src="./assets/user_study/no_vision_interaction.jpg" width="100%">
-
-NAO responds using speech input and dialogue context without analysing the shown food item.
-
-</td>
-
-<td width="50%" align="center">
-
-**Vision-Enabled Condition**
-
-<img src="./assets/user_study/vision_interaction.jpg" width="100%">
-
-NAO captures the food item using its camera and uses Qwen-VL for vision-language analysis.
-
-</td>
-</tr>
-</table>
-
 ### 🎬 User Study Video
 
 > Click the thumbnail below to watch an example interaction from the user study ▶️
